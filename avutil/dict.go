@@ -11,6 +11,9 @@ package avutil
 //#include <libavutil/avutil.h>
 //#include <libavutil/dict.h>
 //#include <stdlib.h>
+// AVDictionary* alloc_av_dict() {
+// 	return av_mallocz(sizeof(AVDictionary*));
+// }
 import "C"
 import (
 	"unsafe"
@@ -135,10 +138,10 @@ func (d *DictionaryEntry) Value() string {
 //////////////////////
 // fix by xnd on 2021-12-31
 /////////////////////
-// func NewAVDict() *avutil.Dictionary {
-// 	d := C.alloc_av_dict()
-// 	if d == nil {
-// 		return nil
-// 	}
-// 	return (*avutil.Dictionary)(unsafe.Pointer(d))
-// }
+func NewAVDict() *Dictionary {
+	d := C.alloc_av_dict()
+	if d == nil {
+		return nil
+	}
+	return (*Dictionary)(unsafe.Pointer(d))
+}

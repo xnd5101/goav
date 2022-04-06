@@ -46,7 +46,10 @@ func main() {
 		if pFormatContext.Streams()[i].CodecParameters().AvCodecGetType() == avformat.AVMEDIA_TYPE_VIDEO {
 			fmt.Printf("width:%d\n", pFormatContext.Streams()[i].Codec().GetWidth())
 			fmt.Printf("height:%d\n", pFormatContext.Streams()[i].Codec().GetHeight())
+			rateStr := pFormatContext.Streams()[i].AvStreamGetRFrameRate()
 			fmt.Printf("rate:%d\n", pFormatContext.Streams()[i].AvStreamGetRFrameRate())
+			fmt.Printf("rate:%d\n", rateStr.Num()/rateStr.Den())
+			// fmt.Printf("rate:%d\n", rateStr.Den())
 			// fmt.Printf("rate:%d\n", pFormatContext.Streams()[i].AvgFrameRate().Num()/pFormatContext.Streams()[i].AvgFrameRate().Den())
 			fmt.Printf("rate:%d\n", pFormatContext.Streams()[i].RFrameRate())
 			videoindex = i

@@ -1,11 +1,10 @@
-
 package avformat_test
 
 import (
 	"testing"
 
-	"github.com/giorgisio/goav/avformat"
 	"github.com/stretchr/testify/assert"
+	"github.com/xnd5101/goav/avformat"
 )
 
 func TestAvUrlSplitWithSufficientSizes(t *testing.T) {

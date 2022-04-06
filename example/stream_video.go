@@ -5,9 +5,9 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/giorgisio/goav/avcodec"
-	"github.com/giorgisio/goav/avformat"
-	"github.com/giorgisio/goav/avutil"
+	"github.com/xnd5101/goav/avcodec"
+	"github.com/xnd5101/goav/avformat"
+	"github.com/xnd5101/goav/avutil"
 )
 
 func main() {

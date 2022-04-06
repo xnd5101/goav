@@ -1,4 +1,4 @@
-module github.com/giorgisio/goav
+module github.com/xnd5101/goav
 
 go 1.14
 

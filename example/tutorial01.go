@@ -65,10 +65,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Register all formats and codecs
+	avformat.AvRegisterAll()
+	avcodec.AvcodecRegisterAll()
+
+	srcUrl := os.Args[1]
+
 	// Open video file
 	pFormatContext := avformat.AvformatAllocContext()
-	if avformat.AvformatOpenInput(&pFormatContext, os.Args[1], nil, nil) != 0 {
-		fmt.Printf("Unable to open file %s\n", os.Args[1])
+	if avformat.AvformatOpenInput(&pFormatContext, srcUrl, nil, nil) != 0 {
+		fmt.Printf("Unable to open file %s\n", srcUrl)
 		os.Exit(1)
 	}
 
@@ -79,7 +85,7 @@ func main() {
 	}
 
 	// Dump information about file onto standard error
-	pFormatContext.AvDumpFormat(0, os.Args[1], 0)
+	pFormatContext.AvDumpFormat(0, srcUrl, 0)
 
 	// Find the first video stream
 	for i := 0; i < int(pFormatContext.NbStreams()); i++ {
@@ -145,7 +151,12 @@ func main() {
 			// Read frames and save first five frames to disk
 			frameNumber := 1
 			packet := avcodec.AvPacketAlloc()
-			for pFormatContext.AvReadFrame(packet) >= 0 {
+			defer packet.AvFreePacket()
+			for {
+				if pFormatContext.AvReadFrame(packet) < 0 {
+					fmt.Println("read frame fail")
+					os.Exit(1)
+				}
 				// Is this a packet from the video stream?
 				if packet.StreamIndex() == i {
 					// Decode video frame
@@ -155,31 +166,39 @@ func main() {
 					}
 					for response >= 0 {
 						response = pCodecCtx.AvcodecReceiveFrame((*avcodec.Frame)(unsafe.Pointer(pFrame)))
+						fmt.Printf("code is %d\n", response)
 						if response == avutil.AvErrorEAGAIN || response == avutil.AvErrorEOF {
+							fmt.Printf("Error EAGAIN\n")
+							continue
+						} else if response == avutil.AvErrorEOF {
+							fmt.Printf("Error EOF\n")
 							break
 						} else if response < 0 {
 							fmt.Printf("Error while receiving a frame from the decoder: %s\n", avutil.ErrorFromCode(response))
-							return
-						}
-
-						if frameNumber <= 5 {
-							// Convert the image from its native format to RGB
-							swscale.SwsScale2(swsCtx, avutil.Data(pFrame),
-								avutil.Linesize(pFrame), 0, pCodecCtx.Height(),
-								avutil.Data(pFrameRGB), avutil.Linesize(pFrameRGB))
-
-							// Save the frame to disk
-							fmt.Printf("Writing frame %d\n", frameNumber)
-							SaveFrame(pFrameRGB, pCodecCtx.Width(), pCodecCtx.Height(), frameNumber)
+							// return
+							continue
 						} else {
-							return
+							break
 						}
-						frameNumber++
 					}
+
+					if frameNumber <= 5 {
+						// Convert the image from its native format to RGB
+						swscale.SwsScale2(swsCtx, avutil.Data(pFrame),
+							avutil.Linesize(pFrame), 0, pCodecCtx.Height(),
+							avutil.Data(pFrameRGB), avutil.Linesize(pFrameRGB))
+
+						// Save the frame to disk
+						fmt.Printf("Writing frame %d\n", frameNumber)
+						SaveFrame(pFrameRGB, pCodecCtx.Width(), pCodecCtx.Height(), frameNumber)
+					} else {
+						return
+					}
+					frameNumber++
 				}
 
 				// Free the packet that was allocated by av_read_frame
-				packet.AvFreePacket()
+				// packet.AvFreePacket()
 			}
 
 			// Free the RGB image
